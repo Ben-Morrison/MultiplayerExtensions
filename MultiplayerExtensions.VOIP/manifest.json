@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "MultiplayerExtensions.VOIP",
+  "name": "MultiplayerExtensions.VOIP",
+  "author": "",
+  "version": "0.0.1",
+  "description": "",
+  "gameVersion": "1.12.2",
+  "dependsOn": {
+    "BSIPA": "^4.1.3"
+  }
+}
