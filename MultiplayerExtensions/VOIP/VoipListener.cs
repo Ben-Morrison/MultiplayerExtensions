@@ -13,13 +13,24 @@ namespace MultiplayerExtensions.VOIP
         private OpusEncoder? _encoder;
 
         private AudioClip? recording;
-        private float[] recordingBuffer;
-        private float[] resampleBuffer;
-        private string _usedMicrophone;
+        private float[]? recordingBuffer;
+        //private float[]? resampleBuffer;
+        private string? _usedMicrophone;
         private int lastPos = 0;
         private int index;
         public int inputFreq;
-        public event EventHandler<VoipPacket> OnAudioGenerated;
+        public event EventHandler<VoipPacket>? OnAudioGenerated;
+
+        public bool SetMicrophone(string? deviceName)
+        {
+            bool success = false;
+            if (Microphone.devices.Contains(deviceName))
+            {
+                success = true;
+                _usedMicrophone = deviceName;
+            }
+            return success;
+        }
 
         private bool _isListening;
 
@@ -34,7 +45,8 @@ namespace MultiplayerExtensions.VOIP
                 if (!_isListening && value && recordingBuffer != null)
                 {
                     index += 3;
-                    lastPos = Math.Max(Microphone.GetPosition(_usedMicrophone) - recordingBuffer.Length, 0);
+                    lastPos = Math.Max(Microphone.GetPosition(_usedMicrophone) - recordingBuffer.Length,
+                                        0);
                 }
                 _isListening = value;
             }
