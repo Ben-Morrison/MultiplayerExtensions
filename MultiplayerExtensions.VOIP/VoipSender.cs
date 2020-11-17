@@ -1,25 +1,27 @@
-﻿using OpusDotNet;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
 using Zenject;
+using MultiplayerExtensions.VOIP.Utilities;
+using Concentus.Structs;
 
 namespace MultiplayerExtensions.VOIP
 {
-    public class VoipListener : ITickable
+    public class VoipSender : ITickable
     {
         private OpusEncoder? _encoder;
 
         private AudioClip? recording;
-        private float[] recordingBuffer;
-        private float[] resampleBuffer;
-        private string _usedMicrophone;
+        private float[]? recordingBuffer;
+        private float[]? resampleBuffer;
+        private string? _usedMicrophone;
         private int lastPos = 0;
         private int index;
         public int inputFreq;
-        public event EventHandler<VoipPacket> OnAudioGenerated;
+        public event EventHandler<VoipPacket>? OnAudioGenerated;
+        System.Buffers.ArrayPool<byte> byteAryPool = System.Buffers.ArrayPool<byte>.Shared;
 
         private bool _isListening;
 
@@ -31,6 +33,9 @@ namespace MultiplayerExtensions.VOIP
             }
             set
             {
+                if (value == _isListening)
+                    return;
+                Plugin.Log?.Debug($"IsListening changed: {value}");
                 if (!_isListening && value && recordingBuffer != null)
                 {
                     index += 3;
@@ -40,24 +45,34 @@ namespace MultiplayerExtensions.VOIP
             }
         }
 
-
+        public VoipSender()
+        {
+            Plugin.Log?.Info("Created VoipSender");
+            StartRecording();
+        }
 
         public void StartRecording()
         {
             if (Microphone.devices.Length == 0)
-                return;
-            recording = Microphone.Start(_usedMicrophone, true, 20, AudioUtils.GetFreqForMic(_usedMicrophone));
+                return; 
+            _encoder = GetEncoder(_usedMicrophone, 48000);
+            var ratio = inputFreq / (float)(_encoder.SampleRate); 
+            int sizeRequired = 960;
+            recordingBuffer = new float[sizeRequired];
+            recording = Microphone.Start(_usedMicrophone, true, 20, AudioUtils.GetFreqForMic(_usedMicrophone)); 
+            Plugin.Log?.Debug("Used microphone: " + (_usedMicrophone == null ? "DEFAULT" : _usedMicrophone));
+            Plugin.Log?.Debug("Used mic sample rate: " + inputFreq + "Hz");
+            Plugin.Log?.Debug("Used buffer size for recording: " + sizeRequired + " floats");
         }
 
         protected OpusEncoder GetEncoder(string? deviceName, int sampleRate)
         {
             if (_encoder != null)
             {
-                _encoder.Dispose();
-                _encoder = null;
+                return _encoder;
             }
             inputFreq = AudioUtils.GetFreqForMic(deviceName);
-            _encoder = new OpusEncoder(OpusDotNet.Application.VoIP, inputFreq, 1)
+            _encoder = new OpusEncoder(48000, 2, Concentus.Enums.OpusApplication.OPUS_APPLICATION_VOIP)
             {
                 Bitrate = 128000,
             };
@@ -75,16 +90,20 @@ namespace MultiplayerExtensions.VOIP
         {
             if (recording == null)
                 return;
+            if (Input.GetKey(KeyCode.K))
+                IsListening = true;
+            else
+                IsListening = false;
             int now = Microphone.GetPosition(_usedMicrophone);
             int length = now - lastPos;
-            if(now < lastPos)
+            if (now < lastPos)
             {
                 lastPos = 0;
                 length = now;
             }
-            while(length >= recordingBuffer.Length)
+            while (recordingBuffer != null && length >= recordingBuffer.Length)
             {
-                if (_isListening && recording.GetData(recordingBuffer, lastPos))
+                if (_isListening && _encoder != null && recording.GetData(recordingBuffer, lastPos))
                 {
                     //Send..
                     index++;
@@ -95,14 +114,17 @@ namespace MultiplayerExtensions.VOIP
                         //{
                         //    AudioUtils.Resample(recordingBuffer, resampleBuffer, inputFreq, AudioUtils.GetFrequency(encoder.mode));
                         //}
-                        byte[] pcmBytes = new byte[recordingBuffer.Length * 2];
-                        AudioUtils.Convert(recordingBuffer, ref pcmBytes);
-                        int pcmLength = 0;
-                        var data = _encoder.Encode(pcmBytes, pcmBytes.Length, out pcmLength);
-
-                        VoipPacket frag = VoipPacket.Create("test", index, data);
+                        byte[] pcmBytes = byteAryPool.Rent(1275 * 2);
+                        //AudioUtils.Convert(recordingBuffer, pcmBytes);
+                        var dataLength = _encoder.Encode(recordingBuffer, 0, 480, pcmBytes, 0, 1275);
+                        VoipPacket frag = VoipPacket.Create("test", index, pcmBytes, dataLength);
 
                         OnAudioGenerated?.Invoke(this, frag);
+                        byteAryPool.Return(pcmBytes);
+                    }
+                    else
+                    {
+                        Plugin.Log?.Debug("No listeners");
                     }
                 }
                 length -= recordingBuffer.Length;

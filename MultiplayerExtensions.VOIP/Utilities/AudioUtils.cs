@@ -1,11 +1,38 @@
-﻿using System;
+﻿///////////////////////////////////////////////////////////////////////////////////////////////
+// This file is from https://github.com/DwayneBull/UnityVOIP/blob/master/AudioUtils.cs
+//
+// The MIT License (MIT)
+// 
+// Copyright(c) 2016 Dwayne Bull
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+///////////////////////////////////////////////////////////////////////////////////////////////
+using CSCore.CoreAudioAPI;
+using CSCore.SoundIn;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace MultiplayerExtensions.VOIP
+namespace MultiplayerExtensions.VOIP.Utilities
 {
     public enum BandMode
     {
@@ -15,9 +42,18 @@ namespace MultiplayerExtensions.VOIP
         SuperWide,
         Full
     }
-    //https://github.com/DwayneBull/UnityVOIP/blob/master/AudioUtils.cs
+
     public static class AudioUtils
     {
+
+        public static WaveInDevice GetMic()
+        {
+            MMDeviceEnumerator deviceEnumerator = new MMDeviceEnumerator();
+            MMDevice mmDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications);
+            var waveInDevices = WaveInDevice.EnumerateDevices().ToArray();
+            WaveInDevice device = waveInDevices.FirstOrDefault(w => mmDevice.FriendlyName.StartsWith(w.Name));
+            return device;
+        }
         public static void ApplyGain(float[] samples, float gain)
         {
             for (int i = 0; i < samples.Length; i++)
@@ -122,41 +158,48 @@ namespace MultiplayerExtensions.VOIP
             return 0;
         }
 
-        public static void Convert(short[] data, ref float[] target)
+        public static int Convert(short[] data, int dataLength, float[] target)
         {
-            for (int i = 0; i < data.Length; i++)
+            for (int i = 0; i < dataLength; i++)
             {
                 target[i] = data[i] / (float)short.MaxValue;
             }
+            return dataLength;
         }
 
-        public static void Convert(byte[] data, ref short[] target)
+        public static int Convert(byte[] data, int dataLength, short[] target)
         {
-            for(int i = 0; i < data.Length; i = i + 2)
+
+            int lastIndex = 0;
+            for (int i = 0; i < dataLength / 2; i++)
             {
-                target[i] = (short)((data[i + 1] << 8) | data[i]);
+                target[i] = (short)((data[i * 2 + 1] << 8) | data[i * 2]);
+                lastIndex = i;
             }
+            return lastIndex;
         }
 
-        public static void Convert(float[] data, ref short[] target)
+        public static int Convert(float[] data, int dataLength, short[] target)
         {
-            for (int i = 0; i < data.Length; i++)
+            for (int i = 0; i < dataLength; i++)
             {
                 target[i] = (short)(data[i] * short.MaxValue);
             }
+            return dataLength;
         }
 
-        public static void Convert(byte[] data, ref float[] target)
+        public static int Convert(byte[] data, int dataLength, float[] target)
         {
-            for (int i = 0; i < target.Length; i++)
+            for (int i = 0; i < dataLength / 2; i++)
             {
-                target[i] = ((short)((data[i*2 + 1] << 8) | data[i*2])) / (float)short.MaxValue;
+                target[i] = ((short)((data[i * 2 + 1] << 8) | data[i * 2])) / (float)short.MaxValue;
             }
+            return dataLength / 2;
         }
 
-        public static void Convert(float[] data, ref byte[] target)
+        public static int Convert(float[] data, int dataLength, byte[] target)
         {
-            for (int i = 0; i < data.Length; i++)
+            for (int i = 0; i < dataLength; i++)
             {
                 short shortVal = ((short)(data[i] * short.MaxValue));
                 byte low = (byte)(shortVal);
@@ -164,6 +207,7 @@ namespace MultiplayerExtensions.VOIP
                 target[i * 2] = low;
                 target[i * 2 + 1] = high;
             }
+            return dataLength * 2;
         }
     }
 }

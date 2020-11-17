@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MultiplayerExtensions.VOIP;
+using MultiplayerExtensions.VOIP.Utilities;
 
 namespace MultiplayerExtensionsTests
 {
@@ -17,10 +18,10 @@ namespace MultiplayerExtensionsTests
             float[] original = new float[] { .434f, .23432f, .2342f, .9349f };
             byte[] byteAry = new byte[original.Length * 2];
 
-            AudioUtils.Convert(original, ref byteAry);
+            AudioUtils.Convert(original, original.Length, byteAry);
 
             float[] reverted = new float[original.Length];
-            AudioUtils.Convert(byteAry, ref reverted);
+            AudioUtils.Convert(byteAry, byteAry.Length, reverted);
 
             for(int i = 0; i < original.Length; i++)
             {
@@ -36,10 +37,10 @@ namespace MultiplayerExtensionsTests
         {
             byte[] original = new byte[] { 0x37, 0x8C, 0x37, 0x8C };
             float[] floatAry = new float[original.Length / 2];
-            AudioUtils.Convert(original, ref floatAry);
+            AudioUtils.Convert(original, original.Length, floatAry);
 
             byte[] reverted = new byte[original.Length];
-            AudioUtils.Convert(floatAry, ref reverted);
+            AudioUtils.Convert(floatAry, floatAry.Length, reverted);
 
             for (int i = 0; i < original.Length; i++)
             {

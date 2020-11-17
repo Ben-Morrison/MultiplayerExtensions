@@ -9,9 +9,10 @@ namespace MultiplayerExtensions.VOIP
 {
     public class VoipPacket : INetSerializable, IPoolablePacket
     {
-        public string? playerId;
-        public byte[]? data;
-        public int index;
+        public string? PlayerId;
+        public byte[]? Data;
+        public int DataLength;
+        public int Index;
 
         protected static PacketPool<VoipPacket> pool
         {
@@ -21,35 +22,36 @@ namespace MultiplayerExtensions.VOIP
             }
         }
 
-        public static VoipPacket Create(string playerId, int index, byte[] data)
+        public static VoipPacket Create(string playerId, int index, byte[] data, int dataLength)
         {
             VoipPacket packet = pool.Obtain();
-            packet.playerId = playerId;
-            packet.index = index;
-            packet.data = data;
+            packet.PlayerId = playerId;
+            packet.Index = index;
+            packet.Data = data;
+            packet.DataLength = dataLength;
             return packet;
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            playerId = reader.GetString();
-            index = reader.GetInt();
-            data = reader.GetBytesWithLength();
+            PlayerId = reader.GetString();
+            Index = reader.GetInt();
+            Data = reader.GetBytesWithLength();
         }
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(playerId);
-            writer.Put(index);
-            if (data != null)
-                writer.PutBytesWithLength(data, 0, data.Length);
+            writer.Put(PlayerId);
+            writer.Put(Index);
+            if (Data != null)
+                writer.PutBytesWithLength(Data, 0, DataLength);
             else
                 Plugin.Log?.Warn($"Trying to serialize a 'VoipPacket' with null data.");
         }
 
         public void Release()
         {
-            data = null;
+            Data = null;
             pool.Release(this);
         }
     }

@@ -8,6 +8,13 @@ namespace MultiplayerExtensionsTests.Utilities_Tests
     public class LevelIdToHash_Tests
     {
         [TestMethod]
+        public void Thing()
+        {
+            string path = @"J:\Oculus\Software\hyperbolic-magnetism-beat-saber\Beat Saber_Data\CustomLevels\4B48 (Camellia (Feat. Nanahira) - Can I Friend You On Bassbook Lol [Bassline Yatteru LOL] - RaxanZer\Camellia (Feat. Nanahira) - Can I Friend You On Bassbook Lol [Bassline Yatteru LOL].egg";
+            int length = path.Length;
+        }
+
+        [TestMethod]
         public void NormalCustomLevel()
         {
             string expectedHash = "D375405D047D6A2A4DD0F4D40D8DA77554F1F677";

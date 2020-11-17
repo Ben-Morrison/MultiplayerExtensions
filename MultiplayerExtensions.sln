@@ -14,7 +14,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollectDependencies", "BS-P
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiplayerExtensionsTests", "MultiplayerExtensionsTests\MultiplayerExtensionsTests.csproj", "{3FC8386F-B51C-4202-8B50-B1B8B2C6A76C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiplayerExtensions.VOIP", "MultiplayerExtensions.VOIP\MultiplayerExtensions.VOIP.csproj", "{7B3E6336-7F15-4C90-BCD6-6C26F1F8DB34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiplayerExtensions.VOIP", "MultiplayerExtensions.VOIP\MultiplayerExtensions.VOIP.csproj", "{7B3E6336-7F15-4C90-BCD6-6C26F1F8DB34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,7 +31,6 @@ Global
 		{4641BE95-C3F7-4636-BA24-67188A38D94C}.Release|x64.ActiveCfg = Release|x64
 		{4641BE95-C3F7-4636-BA24-67188A38D94C}.Release|x64.Build.0 = Release|x64
 		{5F33B310-DC8D-4C0D-877E-BAC3908DE10F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F33B310-DC8D-4C0D-877E-BAC3908DE10F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F33B310-DC8D-4C0D-877E-BAC3908DE10F}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{5F33B310-DC8D-4C0D-877E-BAC3908DE10F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F33B310-DC8D-4C0D-877E-BAC3908DE10F}.Release|Any CPU.Build.0 = Release|Any CPU
