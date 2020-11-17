@@ -32,6 +32,9 @@ namespace MultiplayerExtensions.VOIP
             voipSource = gameObject.AddComponent<AudioSource>();
             voipSource.clip = null;
             voipSource.spatialize = false;
+            //voipSource.bypassEffects = true;
+            //voipSource.bypassListenerEffects = true;
+            //voipSource.bypassReverbZones = true;
             voipSource.loop = true;
             voipSource.volume = 1f;
             voipSource.Play();
@@ -50,7 +53,7 @@ namespace MultiplayerExtensions.VOIP
                 float[] floatData = new float[480 * 2];// floatAryPool.Rent(480 * 2);
                 int length = Decoder.Decode(e.Data, 0, e.DataLength, floatData, 0, 5760);
                 Plugin.Log?.Debug($"Playing fragment, length {length}");
-                PlayVoIPFragment(floatData, length * 2, e.Index);
+                PlayVoIPFragment(floatData, length * Decoder.NumChannels, e.Index);
                 //floatAryPool.Return(floatData);
             }
         }
@@ -80,21 +83,18 @@ namespace MultiplayerExtensions.VOIP
                 return;
             //Plugin.Log?.Debug($"OnAudioFilterRead: {data.Length} | {channels} channels");
             int sampleRate = AudioSettings.outputSampleRate;
-
-            int dataLen = 480;// data.Length / channels;
+            int dataLen = data.Length / channels;
             if(_voipBuffer == null)
-                _voipBuffer = new float[dataLen * 2];
+                _voipBuffer = new float[dataLen];
 
+            int bufferSize = Mathf.CeilToInt(dataLen / (AudioSettings.outputSampleRate / 48000));
             if (_voipBuffer.Length < Mathf.CeilToInt(dataLen / (sampleRate / 48000)))
             {
-                int bufferSize = Mathf.CeilToInt(dataLen / (AudioSettings.outputSampleRate / 48000));
                 _voipBuffer = new float[bufferSize];// new float[];
                 Plugin.Log?.Debug($"Created new VoIP player buffer ({bufferSize})! Size: {dataLen}, Channels: {channels}, Resampling rate: {sampleRate / 48000}x");
             }
-
-            int read = _voipFragQueue.Read(data, 0, Mathf.CeilToInt(dataLen / (sampleRate / 48000)));
-
-            //AudioUtils.Resample(_voipBuffer, data, read, data.Length, 16000, sampleRate, channels);
+            int read = _voipFragQueue.Read(_voipBuffer, 0, bufferSize);
+            AudioUtils.Resample(_voipBuffer, data, read, data.Length, 48000, sampleRate, channels);
         }
         public void PlayVoIPFragment(float[] data, int dataLength, int fragIndex)
         {
